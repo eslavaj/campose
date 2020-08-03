@@ -1,0 +1,7 @@
+.cproject
+.project
+.settings/
+build/
+Debug/
+images/testMapsAPIStatic.ipynb
+images/.ipynb_checkpoints
