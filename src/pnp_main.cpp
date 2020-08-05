@@ -9,16 +9,28 @@
 #include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/highgui.hpp>
+#include <opencv2/viz.hpp>
 #include <iostream>
 
 #include <boost/circular_buffer.hpp>
 
 #include "calibration_matrix.hpp"
 #include "KeypointProcessorGpu.hpp"
+#include "CameraPoseEstimator.hpp"
 
 
 using namespace cv;
 using namespace std;
+
+int showCameraRaw(cv::Mat &camFrame)
+{
+	if( camFrame.empty() ) return -1; // end of video stream
+	namedWindow( "Video input", WINDOW_NORMAL | WINDOW_KEEPRATIO ); // Create a window for display.
+	imshow("Video input", camFrame);
+
+	return 0;
+}
+
 
 int main(int argc, char** argv)
 {
@@ -59,25 +71,40 @@ int main(int argc, char** argv)
 
     int dataBufferSize = 2;       // no. of images which are held in memory (ring buffer) at the same time
 
+    // -------------------
+    // Create a viz window
+    cv::viz::Viz3d visualizer("Viz window");
+
     boost::circular_buffer<DataFrame> dataBuffer(dataBufferSize);
     KeypointProcessorGpu pointProcGPU(dataBuffer, detectorType, selectorType, true);
+    CameraPoseEstimator camPoseEstimator(dataBuffer, A_calib, D_calib, visualizer);
+
+
 
     cv::Mat frame, frame_vis;
+
+    int counter_viz = 0;
     while(cap.read(frame) && cv::waitKey(30) != 27)    // capture frame until ESC is pressed
     {
-    	if( frame.empty() ) break; // end of video stream
 
-    	namedWindow( "Video input", WINDOW_NORMAL | WINDOW_KEEPRATIO ); // Create a window for display.
-    	imshow("Video input", frame);
+    	//if(showCameraRaw(frame) !=0) break;
 
         frame_vis = frame.clone();                     // refresh visualisation frame
         // MAIN ALGORITHM
 
     	pointProcGPU.extractKpointDescriptors(frame_vis);
     	pointProcGPU.matchKpoints(mpointStrat);
+    	//pointProcGPU.visualize(0);
 
+    	camPoseEstimator.calcCameraPose();
+    	if(counter_viz%5000)
+    	{
+    		camPoseEstimator.visualize();
+    	}
+    	counter_viz++;
 
-
+    	usleep(100000);
+    	//cv::waitKey(0);
 
     }
 

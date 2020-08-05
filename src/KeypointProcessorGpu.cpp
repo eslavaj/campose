@@ -162,6 +162,7 @@ void KeypointProcessorGpu::matchKpoints(string mpointStrategy)
         (m_dataFrameBuffer.end() - 1)->gpu_kptMatches = gmatches.clone();
 
         // visualize matches between current and previous image
+        /*
         if (m_visuEnable)
         {
             cv::Mat matchImg = ((m_dataFrameBuffer.end() - 1)->cameraImg).clone();
@@ -179,6 +180,7 @@ void KeypointProcessorGpu::matchKpoints(string mpointStrategy)
             //cv::waitKey(0); // wait for key to be pressed
             usleep(100000);
         }
+        */
     }
 }
 
@@ -302,6 +304,8 @@ RefineReturnCode::RefineReturnCode KeypointProcessorGpu::refineMatches(const std
 					keypoints2[outMatches[i].trainIdx].pt.x= newPoints2[i].x;
 					keypoints2[outMatches[i].trainIdx].pt.y= newPoints2[i].y;
 				}
+				(m_dataFrameBuffer.end() - 1)->refinedPointsPrev = newPoints1;
+				(m_dataFrameBuffer.end() - 1)->refinedPointsCurr = newPoints2;
 			}
 
 			m_fundMatrix = outMatrix.clone();
@@ -320,3 +324,28 @@ RefineReturnCode::RefineReturnCode KeypointProcessorGpu::refineMatches(const std
 	return RefineReturnCode::OK;
 }
 
+
+void KeypointProcessorGpu::visualize(double wait_uSec)
+{
+    if (m_dataFrameBuffer.size() > 1) // wait until at least two images have been processed
+    {
+        // visualize matches between current and previous image
+        if (m_visuEnable)
+        {
+            cv::Mat matchImg = ((m_dataFrameBuffer.end() - 1)->cameraImg).clone();
+
+            cv::drawMatches((m_dataFrameBuffer.end() - 2)->cameraImg, (m_dataFrameBuffer.end() - 2)->keypoints,
+                            (m_dataFrameBuffer.end() - 1)->cameraImg, (m_dataFrameBuffer.end() - 1)->keypoints,
+    						(m_dataFrameBuffer.end() - 1)->kptMatches, matchImg,
+                            cv::Scalar::all(-1), cv::Scalar::all(-1),
+                            vector<char>(), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
+
+            string windowName = "Matching keypoints between two camera images";
+            cv::namedWindow(windowName, cv::WINDOW_NORMAL | cv::WINDOW_KEEPRATIO);
+            cv::imshow(windowName, matchImg);
+            cout << "Press key to continue to next image" << endl;
+            //cv::waitKey(0); // wait for key to be pressed
+            usleep(wait_uSec);
+        }
+    }
+}

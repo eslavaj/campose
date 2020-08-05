@@ -78,6 +78,7 @@ public:
 						 std::vector<cv::KeyPoint>& keypoints2,
 					     std::vector<cv::DMatch>& outMatches,
 						 std::string matchRefineStrategy);
+	void visualize(double wait_uSec);
 
 
 private:
@@ -88,7 +89,7 @@ private:
 	cv::Mat m_fundMatrix;
 	cv::Mat m_homographyMatrix;
 	double m_distToEpipLine = 1.0;
-	double m_ransacConfid = 0.98;
+	double m_ransacConfid = 0.999;
 	bool m_refineFund = true; /*Refine fundamental matrix*/
 	bool m_refineMatches = true; /*Refine the matches*/
 	bool m_calcRelVertDisp = false; /*If true then algorithm will calculate relative vertical displacement assuming
