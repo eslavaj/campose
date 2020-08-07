@@ -39,6 +39,8 @@ struct DataFrame { // represents the available sensor information at the same ti
     cv::Mat translationVector; //Translation vector relative to the previous frame
     cv::Mat projectionMatrix; //Projection matrix that includes rotation and translation information
 
+    double msTimestamp;
+
 };
 
 

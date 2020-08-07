@@ -22,6 +22,8 @@ ExtractReturnCode::ExtractReturnCode KeypointProcessorGpu::extractKpointDescript
 	/*To measure time*/
 	double t;
 	DataFrame frame;
+
+	frame.msTimestamp = ( ( (double)cv::getTickCount() )/ cv::getTickFrequency() )*1000;
 	/*Convert to grayscale*/
     cv::Mat imgGray;
     cv::cvtColor(newImage, frame.cameraImg, cv::COLOR_BGR2GRAY);
@@ -149,7 +151,9 @@ void KeypointProcessorGpu::matchKpoints(string mpointStrategy)
             	return;
             }
             t = ((double)cv::getTickCount() - t) / cv::getTickFrequency();
-            cout << "#4 : REFINE MATCHES DONE " << ransacCorrtedMatches.size() << " matches in " << 1000 * t / 1.0 << " ms" << endl;
+            cout << "#4 : REFINE MATCHES DONE between prev: "<< (m_dataFrameBuffer.end() - 2)->msTimestamp << " and current: "
+            		<< (m_dataFrameBuffer.end() - 1)->msTimestamp
+            		<< ransacCorrtedMatches.size() << " matches in " << 1000 * t / 1.0 << " ms" << endl;
             matches = ransacCorrtedMatches;
         }
         else
@@ -303,9 +307,13 @@ RefineReturnCode::RefineReturnCode KeypointProcessorGpu::refineMatches(const std
 					keypoints1[outMatches[i].queryIdx].pt.y= newPoints1[i].y;
 					keypoints2[outMatches[i].trainIdx].pt.x= newPoints2[i].x;
 					keypoints2[outMatches[i].trainIdx].pt.y= newPoints2[i].y;
+
+					(m_dataFrameBuffer.end() - 1)->refinedPointsPrev.push_back(cv::Point_<float>(newPoints1[i].x, newPoints1[i].y));
+					(m_dataFrameBuffer.end() - 1)->refinedPointsCurr.push_back(cv::Point_<float>(newPoints2[i].x, newPoints2[i].y));
+
 				}
-				(m_dataFrameBuffer.end() - 1)->refinedPointsPrev = newPoints1;
-				(m_dataFrameBuffer.end() - 1)->refinedPointsCurr = newPoints2;
+				//(m_dataFrameBuffer.end() - 1)->refinedPointsPrev = newPoints1;
+				//(m_dataFrameBuffer.end() - 1)->refinedPointsCurr = newPoints2;
 			}
 
 			m_fundMatrix = outMatrix.clone();

@@ -69,7 +69,7 @@ int main(int argc, char** argv)
     }
     */
 
-    int dataBufferSize = 2;       // no. of images which are held in memory (ring buffer) at the same time
+    int dataBufferSize = 21;       // no. of images which are held in memory (ring buffer) at the same time
 
     // -------------------
     // Create a viz window
@@ -87,7 +87,7 @@ int main(int argc, char** argv)
     while(cap.read(frame) && cv::waitKey(30) != 27)    // capture frame until ESC is pressed
     {
 
-    	//if(showCameraRaw(frame) !=0) break;
+    	if(showCameraRaw(frame) !=0) break;
 
         frame_vis = frame.clone();                     // refresh visualisation frame
         // MAIN ALGORITHM
@@ -99,12 +99,15 @@ int main(int argc, char** argv)
     	camPoseEstimator.calcCameraPose();
     	if(counter_viz%5000)
     	{
-    		camPoseEstimator.visualize();
+    		//camPoseEstimator.visualize();
+    		//camPoseEstimator.visualizeLast20();
     	}
     	counter_viz++;
 
-    	usleep(100000);
-    	//cv::waitKey(0);
+    	camPoseEstimator.visualizeLast20();
+
+    	//usleep(1000000);
+    	cv::waitKey(0);
 
     }
 

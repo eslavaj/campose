@@ -32,6 +32,8 @@ public:
 
 	void calcCameraPose();
 	void visualize();
+	void visualizeCami(int i);
+	void visualizeLast20();
 
 
 private:

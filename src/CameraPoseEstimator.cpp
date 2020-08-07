@@ -5,12 +5,20 @@
  *      Author: jeslava
  */
 
+#include <string>
+#include <iostream>
+
+
 #include "CameraPoseEstimator.hpp"
 #include "opencv2/calib3d.hpp"
 #include <opencv2/viz.hpp>
+#include <opencv2/viz/widgets.hpp>
+#include <opencv2/core/types.hpp>
 
 //#include "calibration_matrix.hpp"
 #include "triangulate.h"
+
+using namespace std;
 
 void CameraPoseEstimator::calcCameraPose()
 {
@@ -44,9 +52,14 @@ void CameraPoseEstimator::calcCameraPose()
 
 		projectionM.copyTo((m_dataFrameBuffer.end() - 1)->projectionMatrix);
 
+		cout<<"rotationMatrix: " << (m_dataFrameBuffer.end() - 1)->rotationMatrix <<endl;
+		cout<<"translationVector: " << (m_dataFrameBuffer.end() - 1)->translationVector <<endl;
+
 
 		numberOfPts = cv::sum(inliers)[0];
 		std::cout << "#6 : Number of inliers after recovering pose: " << numberOfPts << std::endl;
+		cout << "#6 : Pose recovered between prev: "<< (m_dataFrameBuffer.end() - 2)->msTimestamp << " and current: "
+		            		<< (m_dataFrameBuffer.end() - 1)->msTimestamp << endl;
 
 		/*Check if camera has moved enough, if not then discard this frame*/
 		if(numberOfPts<8)
@@ -153,10 +166,126 @@ void CameraPoseEstimator::visualize()
 		m_visualizer.setWidgetPose("Line2", pose);
 
 
-		m_visualizer.spinOnce(1,     // pause 1ms
+		m_visualizer.spinOnce(5000,     // pause 1ms
 							true); // redraw
 
 		//m_visualizer.spin();
 
 	}
 }
+
+
+
+
+void CameraPoseEstimator::visualizeCami(int i) /* 21 , 20 ****** 19, 18*/
+{
+
+	/*Generate random color*/
+	srand (i);
+	int rcolor = rand() % 200 + 50;
+	srand (i+100);
+	int gcolor = rand() % 200 + 50;
+	srand (i+200);
+	int bcolor = rand() % 200 +50;
+	cv::viz::Color randomColor(bcolor, gcolor, rcolor);
+
+	/// Construct the scene
+	// Create one virtual camera
+	cv::viz::WCameraPosition cam1(m_A_calib33f,  // matrix of intrinsics
+			(m_dataFrameBuffer.end() - i)->cameraImg,                             // image displayed on the plane
+			1.0,                                // scale factor
+			cv::viz::Color::black());
+
+	// Create a second virtual camera
+	cv::viz::WCameraPosition cam2(m_A_calib33f,  // matrix of intrinsics
+			(m_dataFrameBuffer.end() - i + 1)->cameraImg,                             // image displayed on the plane
+			1.0,                                // scale factor
+			//cv::viz::Color::black());
+			randomColor);
+
+	// choose one point for visualization
+	cv::Vec3d testPoint = triangulate((m_dataFrameBuffer.end() - i)->projectionMatrix, (m_dataFrameBuffer.end() - i + 1)->projectionMatrix,
+			(m_dataFrameBuffer.end() - i + 1)->undistortedPointsPrev[UNDISTORTED_POINT_NBR],
+			(m_dataFrameBuffer.end() - i + 1)->undistortedPointsCurr[UNDISTORTED_POINT_NBR]);
+
+	cv::viz::WSphere point3D(testPoint, 0.05, 10, cv::viz::Color::red());
+
+	string labeliplus1 = "Image-" + std::to_string( -(-i+1) );
+
+	string labelTimestampplus1 = "Image-" + std::to_string( -(-i+1) ) + " " + std::to_string( (int)( (m_dataFrameBuffer.end() - i + 1)->msTimestamp ) );
+
+	cv::viz::WText3D labelCamiplus1(labeliplus1,cv::Point3_<double>(0, 0, 0), 0.03, true, randomColor);// cv::viz::Color::black());
+
+	cv::viz::WText3D labelTimestampCamiplus1(labelTimestampplus1,cv::Point3_<double>(0, 0, 0), 0.03, true, randomColor);
+
+	// its associated line of projection
+	double lenght(10.);
+	cv::viz::WLine line1(cv::Point3d(0., 0., 0.), cv::Point3d(lenght*( (m_dataFrameBuffer.end() - i + 1)->undistortedPointsPrev[UNDISTORTED_POINT_NBR](0) ),
+			lenght*( (m_dataFrameBuffer.end() - i + 1)->undistortedPointsPrev[UNDISTORTED_POINT_NBR](1) ),lenght),
+			cv::viz::Color::green());
+	cv::viz::WLine line2(cv::Point3d(0., 0., 0.), cv::Point3d(lenght*( (m_dataFrameBuffer.end() - i + 1)->undistortedPointsCurr[UNDISTORTED_POINT_NBR](0) ),
+			lenght*( (m_dataFrameBuffer.end() - i + 1)->undistortedPointsCurr[UNDISTORTED_POINT_NBR](1) ), lenght),
+					cv::viz::Color::green());
+
+	// the reconstructed cloud of 3D points
+	cv::viz::WCloud cloud((m_dataFrameBuffer.end() - i + 1)->points3D, cv::viz::Color::blue());
+	cloud.setRenderingProperty(cv::viz::POINT_SIZE, 3.);
+
+	// Add the virtual objects to the environment
+	string cami = "CameraP-" + std::to_string(i);
+	string camiplus1 = "CameraC-" + std::to_string(-(-i+1));
+	string cloudi = "CloudC-" + std::to_string(-(-i+1));
+	string linei = "LineP-" + std::to_string(i);
+	string lineiplus1 = "LineC-" + std::to_string(-(-i+1));
+	string triangulatedi = "Triangulated-" + std::to_string(-(-i+1));
+
+	/*m_visualizer.showWidget(cami, cam1);*/
+	m_visualizer.showWidget(camiplus1, cam2);
+	m_visualizer.showWidget(cloudi, cloud);
+	//m_visualizer.showWidget(linei, line1);
+	//m_visualizer.showWidget(lineiplus1, line2);
+	m_visualizer.showWidget(triangulatedi, point3D);
+	m_visualizer.showWidget(labeliplus1, labelCamiplus1);
+
+	m_visualizer.showWidget(labelTimestampplus1, labelTimestampCamiplus1);
+
+	// Move the second camera
+	/*cv::Affine3d pose((m_dataFrameBuffer.end() - i + 1)->rotationMatrix, (m_dataFrameBuffer.end() - i + 1)->translationVector);*/
+	cv::Affine3d pose((m_dataFrameBuffer.end() - i + 1)->rotationMatrix, cv::Vec3d(0, double(i)/100000.0, 0 ));
+	cv::Affine3d poseTimestamp(cv::Mat::eye(3, 3, CV_64F), cv::Vec3d(1, double(i)/10.0, 1 ));
+	m_visualizer.setWidgetPose(camiplus1, pose);
+	//m_visualizer.setWidgetPose(lineiplus1, pose);
+	m_visualizer.setViewerPose(pose);
+	m_visualizer.setWidgetPose(labeliplus1, pose);
+	m_visualizer.setWidgetPose(labelTimestampplus1, poseTimestamp);
+}
+
+
+
+void CameraPoseEstimator::visualizeLast20()
+{
+	if(m_dataFrameBuffer.size()>=5)
+	{
+		m_visualizer.setBackgroundColor(cv::viz::Color::white());
+
+		//for(int i = 21; i>=2; i--)
+		for(int i = 5; i>=2; i--)
+		{
+			visualizeCami(i);
+		}
+
+
+		cv::Affine3d poseViewer((m_dataFrameBuffer.end() - 1)->rotationMatrix, (m_dataFrameBuffer.end() - 1)->translationVector);
+		m_visualizer.setViewerPose(poseViewer);
+
+		m_visualizer.spinOnce(150000,     // pause 1ms
+							true); // redraw
+
+		//m_visualizer.spin();
+
+	}
+}
+
+
+
+
