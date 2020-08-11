@@ -14,8 +14,15 @@ struct DataFrame { // represents the available sensor information at the same ti
 	{
 		cv::Mat projection1(3, 4, CV_64F, 0.);    // the 3x4 projection matrix
 		cv::Mat diag(cv::Mat::eye(3, 3, CV_64F));
+		diag.at<double>(2,2) = -1;
+		//float diag_elem[9] = {1, 0, 0, 0, 1, 0 , 0, 0, 1 };
+		//cv::Mat diag = cv::Mat(3, 3, CV_64F, diag_elem);
+		diag.copyTo(rotationMatrix);
+		cv::Mat orig(cv::Mat::zeros(3, 1, CV_64F));
+		orig.copyTo(translationVector);
 		diag.copyTo(projection1(cv::Rect(0, 0, 3, 3)));
 		projectionMatrix = projection1.clone();
+		pose = cv::Affine3d(rotationMatrix, translationVector);
 	};
 
     cv::Mat cameraImg; // camera image
@@ -40,6 +47,9 @@ struct DataFrame { // represents the available sensor information at the same ti
     cv::Mat projectionMatrix; //Projection matrix that includes rotation and translation information
 
     double msTimestamp;
+
+    /*just for visualization*/
+    cv::Affine3d pose;
 
 };
 

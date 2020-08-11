@@ -104,9 +104,9 @@ int main(int argc, char** argv)
     	}
     	counter_viz++;
 
-    	camPoseEstimator.visualizeLast20();
+    	camPoseEstimator.visualizeLastN(6);
 
-    	//usleep(1000000);
+    	//usleep(5000000);
     	cv::waitKey(0);
 
     }

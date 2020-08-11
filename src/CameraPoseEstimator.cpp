@@ -45,16 +45,6 @@ void CameraPoseEstimator::calcCameraPose()
 				//cv::noArray());                // inliers matches
 				inliers);
 
-		// compose projection matrix from R,T
-		cv::Mat projectionM(3, 4, CV_64F);        // the 3x4 projection matrix
-		(m_dataFrameBuffer.end() - 1)->rotationMatrix.copyTo(projectionM(cv::Rect(0, 0, 3, 3)));
-		(m_dataFrameBuffer.end() - 1)->translationVector.copyTo(projectionM.colRange(3, 4));
-
-		projectionM.copyTo((m_dataFrameBuffer.end() - 1)->projectionMatrix);
-
-		cout<<"rotationMatrix: " << (m_dataFrameBuffer.end() - 1)->rotationMatrix <<endl;
-		cout<<"translationVector: " << (m_dataFrameBuffer.end() - 1)->translationVector <<endl;
-
 
 		numberOfPts = cv::sum(inliers)[0];
 		std::cout << "#6 : Number of inliers after recovering pose: " << numberOfPts << std::endl;
@@ -86,6 +76,57 @@ void CameraPoseEstimator::calcCameraPose()
 		std::vector<cv::Vec2d> points2u;
 		cv::undistortPoints(inlierPts2, points2u, m_A_calib, m_D_calib);
 
+
+		/*Calculate scale factor for translation*/
+		double scaleTraslatFactor;
+		vector<double> scaleFact_tmp;
+		for(int i = 0; i < inlierPts1.size(); i++)
+		{
+			for(int j=i; j<inlierPts1.size(); j++)
+			{
+				double d2 = powf(points2u[i].val[0] - points2u[j].val[0], 2) + powf(points2u[i].val[1] - points2u[j].val[1], 2);
+				if( d2 > 0.001)
+				{
+					double d1 = powf(points1u[i].val[0] - points1u[j].val[0], 2) + powf(points1u[i].val[1] - points1u[j].val[1], 2);
+					scaleFact_tmp.push_back(d1/d2);
+					//cout<<"scaleTraslatFactor: "<< d1/d2 <<endl;
+				}
+			}
+		}
+
+		if(scaleFact_tmp.size()<5)
+		{
+			cout<<"Frame ignored, not able to compute scale factor";
+			m_dataFrameBuffer.pop_back();
+			return;
+		}
+		/*Calculate median*/
+		std::sort(scaleFact_tmp.begin(), scaleFact_tmp.end());
+		int scaleFact_nbr = scaleFact_tmp.size();
+		int medianIdx = (int)(scaleFact_nbr/2);
+		if(scaleFact_nbr%2 == 0)
+		{
+			scaleTraslatFactor = (scaleFact_tmp[ medianIdx ] + scaleFact_tmp[ medianIdx + 1 ])/2;
+		}
+		else
+		{
+			scaleTraslatFactor = scaleFact_tmp[ medianIdx + 1];
+		}
+
+
+
+		// compose projection matrix from R,T
+		cv::Mat projectionM(3, 4, CV_64F);        // the 3x4 projection matrix
+		(m_dataFrameBuffer.end() - 1)->rotationMatrix.copyTo(projectionM(cv::Rect(0, 0, 3, 3)));
+		(m_dataFrameBuffer.end() - 1)->translationVector = ((m_dataFrameBuffer.end() - 1)->translationVector)*(1/scaleTraslatFactor) ;
+		(m_dataFrameBuffer.end() - 1)->translationVector.copyTo(projectionM.colRange(3, 4));
+
+		projectionM.copyTo((m_dataFrameBuffer.end() - 1)->projectionMatrix);
+
+		cout<<"rotationMatrix: " << (m_dataFrameBuffer.end() - 1)->rotationMatrix <<endl;
+		cout<<"translationVector: " << (m_dataFrameBuffer.end() - 1)->translationVector <<endl;
+
+
 		/*If the previous frame does not have projection matrix then assume a generic matrix*/
 		/*
 		if((m_dataFrameBuffer.end() - 2)->projectionMatrix.cols == 0)
@@ -105,6 +146,13 @@ void CameraPoseEstimator::calcCameraPose()
 		(m_dataFrameBuffer.end() - 1)->undistortedPointsPrev = points1u;
 		(m_dataFrameBuffer.end() - 1)->points3D = points3D;
 
+		/*just for visualization*/
+		cv::Mat translVectorInv(cv::Mat::zeros(3, 1, CV_64F));
+		translVectorInv.at<double>(0,0) = (m_dataFrameBuffer.end() - 1)->translationVector.at<double>(0,0)*(1);
+		translVectorInv.at<double>(0,1) = (m_dataFrameBuffer.end() - 1)->translationVector.at<double>(0,1)*(1);
+		translVectorInv.at<double>(0,2) = (m_dataFrameBuffer.end() - 1)->translationVector.at<double>(0,2)*(1);
+		cv::Affine3d pose_tmp((m_dataFrameBuffer.end() - 1)->rotationMatrix, translVectorInv);
+		(m_dataFrameBuffer.end() - 1)->pose = pose_tmp.concatenate((m_dataFrameBuffer.end() - 2)->pose);
 	}
 }
 
@@ -208,7 +256,7 @@ void CameraPoseEstimator::visualizeCami(int i) /* 21 , 20 ****** 19, 18*/
 			(m_dataFrameBuffer.end() - i + 1)->undistortedPointsPrev[UNDISTORTED_POINT_NBR],
 			(m_dataFrameBuffer.end() - i + 1)->undistortedPointsCurr[UNDISTORTED_POINT_NBR]);
 
-	cv::viz::WSphere point3D(testPoint, 0.05, 10, cv::viz::Color::red());
+	cv::viz::WSphere point3D(testPoint, 0.08, 10, randomColor);
 
 	string labeliplus1 = "Image-" + std::to_string( -(-i+1) );
 
@@ -222,13 +270,13 @@ void CameraPoseEstimator::visualizeCami(int i) /* 21 , 20 ****** 19, 18*/
 	double lenght(10.);
 	cv::viz::WLine line1(cv::Point3d(0., 0., 0.), cv::Point3d(lenght*( (m_dataFrameBuffer.end() - i + 1)->undistortedPointsPrev[UNDISTORTED_POINT_NBR](0) ),
 			lenght*( (m_dataFrameBuffer.end() - i + 1)->undistortedPointsPrev[UNDISTORTED_POINT_NBR](1) ),lenght),
-			cv::viz::Color::green());
+			cv::viz::Color::black());
 	cv::viz::WLine line2(cv::Point3d(0., 0., 0.), cv::Point3d(lenght*( (m_dataFrameBuffer.end() - i + 1)->undistortedPointsCurr[UNDISTORTED_POINT_NBR](0) ),
 			lenght*( (m_dataFrameBuffer.end() - i + 1)->undistortedPointsCurr[UNDISTORTED_POINT_NBR](1) ), lenght),
-					cv::viz::Color::green());
+					randomColor);
 
 	// the reconstructed cloud of 3D points
-	cv::viz::WCloud cloud((m_dataFrameBuffer.end() - i + 1)->points3D, cv::viz::Color::blue());
+	cv::viz::WCloud cloud((m_dataFrameBuffer.end() - i + 1)->points3D, randomColor);
 	cloud.setRenderingProperty(cv::viz::POINT_SIZE, 3.);
 
 	// Add the virtual objects to the environment
@@ -241,7 +289,7 @@ void CameraPoseEstimator::visualizeCami(int i) /* 21 , 20 ****** 19, 18*/
 
 	/*m_visualizer.showWidget(cami, cam1);*/
 	m_visualizer.showWidget(camiplus1, cam2);
-	m_visualizer.showWidget(cloudi, cloud);
+	//m_visualizer.showWidget(cloudi, cloud);
 	//m_visualizer.showWidget(linei, line1);
 	//m_visualizer.showWidget(lineiplus1, line2);
 	m_visualizer.showWidget(triangulatedi, point3D);
@@ -250,33 +298,42 @@ void CameraPoseEstimator::visualizeCami(int i) /* 21 , 20 ****** 19, 18*/
 	m_visualizer.showWidget(labelTimestampplus1, labelTimestampCamiplus1);
 
 	// Move the second camera
-	/*cv::Affine3d pose((m_dataFrameBuffer.end() - i + 1)->rotationMatrix, (m_dataFrameBuffer.end() - i + 1)->translationVector);*/
-	cv::Affine3d pose((m_dataFrameBuffer.end() - i + 1)->rotationMatrix, cv::Vec3d(0, double(i)/100000.0, 0 ));
-	cv::Affine3d poseTimestamp(cv::Mat::eye(3, 3, CV_64F), cv::Vec3d(1, double(i)/10.0, 1 ));
-	m_visualizer.setWidgetPose(camiplus1, pose);
+	//cv::Affine3d posePrev((m_dataFrameBuffer.end() - i)->rotationMatrix, (m_dataFrameBuffer.end() - i)->translationVector);
+
+	/*
+	cv::Affine3d pose((m_dataFrameBuffer.end() - i + 1)->rotationMatrix, (m_dataFrameBuffer.end() - i + 1)->translationVector);
+	cv::Affine3d prevPose = (m_dataFrameBuffer.end() - i)->pose;
+	cv::Affine3d newPose = pose.concatenate(prevPose);
+	(m_dataFrameBuffer.end() - i + 1)->pose = newPose;*/
+	/*cv::Affine3d pose((m_dataFrameBuffer.end() - i + 1)->rotationMatrix, cv::Vec3d(0, double(i)/100000.0, 0 ));*/
+	cv::Affine3d newPose = (m_dataFrameBuffer.end() - i + 1)->pose;
+	cv::Affine3d poseTimestamp(cv::Mat::eye(3, 3, CV_64F), cv::Vec3d(10, double(i)/10.0, 10 ));
+	m_visualizer.setWidgetPose(camiplus1, newPose);
+	//m_visualizer.setWidgetPose(linei, posePrev);
 	//m_visualizer.setWidgetPose(lineiplus1, pose);
-	m_visualizer.setViewerPose(pose);
-	m_visualizer.setWidgetPose(labeliplus1, pose);
+
+	m_visualizer.setViewerPose(newPose);
+	m_visualizer.setWidgetPose(labeliplus1, newPose);
 	m_visualizer.setWidgetPose(labelTimestampplus1, poseTimestamp);
 }
 
 
 
-void CameraPoseEstimator::visualizeLast20()
+void CameraPoseEstimator::visualizeLastN(int n)
 {
-	if(m_dataFrameBuffer.size()>=5)
+	if(m_dataFrameBuffer.size()>=n)
 	{
 		m_visualizer.setBackgroundColor(cv::viz::Color::white());
 
 		//for(int i = 21; i>=2; i--)
-		for(int i = 5; i>=2; i--)
+		for(int i = n; i>=2; i--)
 		{
 			visualizeCami(i);
 		}
 
 
 		cv::Affine3d poseViewer((m_dataFrameBuffer.end() - 1)->rotationMatrix, (m_dataFrameBuffer.end() - 1)->translationVector);
-		m_visualizer.setViewerPose(poseViewer);
+		//m_visualizer.setViewerPose((m_dataFrameBuffer.end() - 1)->pose);
 
 		m_visualizer.spinOnce(150000,     // pause 1ms
 							true); // redraw
