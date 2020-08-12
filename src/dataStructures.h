@@ -6,6 +6,8 @@
 #include "opencv2/opencv.hpp"
 #include <opencv2/core/cuda.hpp>
 
+#include "gtsam/geometry/Pose3.h"
+
 
 struct DataFrame { // represents the available sensor information at the same time instance
     
@@ -23,6 +25,15 @@ struct DataFrame { // represents the available sensor information at the same ti
 		diag.copyTo(projection1(cv::Rect(0, 0, 3, 3)));
 		projectionMatrix = projection1.clone();
 		pose = cv::Affine3d(rotationMatrix, translationVector);
+
+
+		gtsam::Rot3 R(rotationMatrix.at<double>(0,0), rotationMatrix.at<double>(0,1), rotationMatrix.at<double>(0,2),
+				rotationMatrix.at<double>(1,0), rotationMatrix.at<double>(1,1), rotationMatrix.at<double>(1,2),
+				rotationMatrix.at<double>(2,0), rotationMatrix.at<double>(2,1), rotationMatrix.at<double>(2,2));
+		gtsam::Point3 t(translationVector.at<double>(0,0),translationVector.at<double>(1,0), translationVector.at<double>(2,0));
+		gtsamRelPose = gtsam::Pose3(R, t);
+		graphPrevNode = 1;
+
 	};
 
     cv::Mat cameraImg; // camera image
@@ -50,6 +61,10 @@ struct DataFrame { // represents the available sensor information at the same ti
 
     /*just for visualization*/
     cv::Affine3d pose;
+
+    /*for gtsam*/
+    gtsam::Pose3 gtsamRelPose;
+    int graphPrevNode;
 
 };
 

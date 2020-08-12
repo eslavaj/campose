@@ -152,7 +152,7 @@ void KeypointProcessorGpu::matchKpoints(string mpointStrategy)
             }
             t = ((double)cv::getTickCount() - t) / cv::getTickFrequency();
             cout << "#4 : REFINE MATCHES DONE between prev: "<< (m_dataFrameBuffer.end() - 2)->msTimestamp << " and current: "
-            		<< (m_dataFrameBuffer.end() - 1)->msTimestamp
+            		<< (m_dataFrameBuffer.end() - 1)->msTimestamp <<"  -   "
             		<< ransacCorrtedMatches.size() << " matches in " << 1000 * t / 1.0 << " ms" << endl;
             matches = ransacCorrtedMatches;
         }

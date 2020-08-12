@@ -88,7 +88,7 @@ void CameraPoseEstimator::calcCameraPose()
 				if( d2 > 0.001)
 				{
 					double d1 = powf(points1u[i].val[0] - points1u[j].val[0], 2) + powf(points1u[i].val[1] - points1u[j].val[1], 2);
-					scaleFact_tmp.push_back(d1/d2);
+					scaleFact_tmp.push_back(sqrt(d1/d2));
 					//cout<<"scaleTraslatFactor: "<< d1/d2 <<endl;
 				}
 			}
