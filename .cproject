@@ -127,7 +127,7 @@
                     					
                     <sourceEntries>
                         						
-                        <entry excluding="campose_maps_main.cpp|campose_caminput_main.cpp|Gtsamer.cpp|PnpProcessing.cpp|PnPProblem.cpp|pnp_cam_main.cpp|pnp_images_main.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+                        <entry excluding="campose_images_kitty_main.cpp|campose_maps_main.cpp|campose_caminput_main.cpp|Gtsamer.cpp|PnpProcessing.cpp|PnPProblem.cpp|pnp_cam_main.cpp|pnp_images_main.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
                         					
                     </sourceEntries>
                     				
@@ -207,7 +207,7 @@
                     					
                     <sourceEntries>
                         						
-                        <entry excluding="campose_maps_main.cpp|campose_caminput_main.cpp|Gtsamer.cpp|PnpProcessing.cpp|PnPProblem.cpp|pnp_cam_main.cpp|pnp_images_main.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+                        <entry excluding="campose_images_kitty_main.cpp|campose_maps_main.cpp|campose_caminput_main.cpp|Gtsamer.cpp|PnpProcessing.cpp|PnPProblem.cpp|pnp_cam_main.cpp|pnp_images_main.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
                         					
                     </sourceEntries>
                     				
