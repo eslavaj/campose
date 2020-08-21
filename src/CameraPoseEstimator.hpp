@@ -28,12 +28,13 @@ public:
 	m_A_calib(cameraIntriParam),
 	m_A_calib33f(m_A_calib),
 	m_D_calib(cameraDistortParam),
-	m_visualizer(visualizer){};
+	m_visualizer(visualizer){ m_visualizer.setBackgroundColor(cv::viz::Color::white());};
 
 	void calcCameraPose();
 	void visualize();
 	void visualizeCami(int i);
 	void visualizeLastN(int n);
+	void visualizeLastFrames();
 
 
 private:

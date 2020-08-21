@@ -344,5 +344,50 @@ void CameraPoseEstimator::visualizeLastN(int n)
 }
 
 
+void CameraPoseEstimator::visualizeLastFrames()
+{
+	int bufferCurrSize = m_dataFrameBuffer.size();
+
+	if(bufferCurrSize>=3)
+	{
+
+		//for(int i = 21; i>=2; i--)
+		for(int i = bufferCurrSize; i>=2; i--)
+		{
+			visualizeCami(i);
+		}
+
+		//cv::Affine3d poseViewer((m_dataFrameBuffer.end() - 1)->rotationMatrix, (m_dataFrameBuffer.end() - 1)->translationVector);
+		//double rotViewer_elem[9] = { 1, 0, 0, 0, 0, -1, 0, 1, 0 };
+		double rotViewer_elem[9] = {  1.0000000,  0.0000000,  0.0000000,
+		   0.0000000,  0.0000000,  1.0000000,
+		   0.0000000, -1.0000000,  0.0000000};
+		cv::Mat rotViewer = cv::Mat(3, 3, CV_64F, rotViewer_elem);
+
+		double translViewer_elem[3] = { 0, -55, 0};
+		cv::Mat translViewer = cv::Mat(3, 1, CV_64F, translViewer_elem);
+		double cumulTransl_elem[3] = {(m_dataFrameBuffer.end() - 1)->pose.translation().val[0],
+								   (m_dataFrameBuffer.end() - 1)->pose.translation().val[1],
+								   (m_dataFrameBuffer.end() - 1)->pose.translation().val[2]};
+		cv::Mat cumulTransl = cv::Mat(3, 1, CV_64F, cumulTransl_elem);
+		translViewer = translViewer + cumulTransl;
+
+
+		//cv::Mat rotViewer_tmp = ((m_dataFrameBuffer.end() - 1)->rotationMatrix)*rotViewer;
+		//rotViewer_tmp.copyTo(rotViewer);
+
+		cv::Affine3d poseViewer(rotViewer, translViewer);
+		//poseViewer = (m_dataFrameBuffer.end() - 1)->pose.concatenate(poseViewer);
+		//poseViewer.rotation(rotViewer);
+		m_visualizer.setViewerPose(poseViewer);
+
+		m_visualizer.spinOnce(1,     // pause 1ms
+							true); // redraw
+
+		//m_visualizer.spin();
+
+	}
+}
+
 
 

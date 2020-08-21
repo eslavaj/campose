@@ -31,6 +31,17 @@ int showCameraRaw(cv::Mat &camFrame)
 	return 0;
 }
 
+int showImageRaw(cv::Mat &imageFrame)
+{
+	//if( imageFrame.empty() ) return -1; // end of video stream
+
+	namedWindow( "Image input", WINDOW_NORMAL | WINDOW_KEEPRATIO ); // Create a window for display.
+	imshow("Image input", imageFrame);
+	cout<<"Press any key"<<endl;
+	cv::waitKey(10);
+	return 0;
+}
+
 
 int main(int argc, char** argv)
 {
@@ -61,13 +72,12 @@ int main(int argc, char** argv)
 	string imgBasePath = dataPath + "images/";
 	string imgPrefix = img_folder + "/"; // left camera, color
 	string imgFileType = ".png";
-	int imgStartIndex = 60; // first file index to load (assumes Lidar and camera names have identical naming convention)
-	//int imgEndIndex = 9;   // last file index to load
-	int imgEndIndex = 140;   // last file index to load
+	int imgStartIndex = 1; // first file index to load (assumes Lidar and camera names have identical naming convention)
+	int imgEndIndex = 700;   // last file index to load
 	int imgFillWidth = 6;  // no. of digits which make up the file index (e.g. img-0001.png)
 
 
-    int dataBufferSize = 75;       // no. of images which are held in memory (ring buffer) at the same time
+    int dataBufferSize = 35;       // no. of images which are held in memory (ring buffer) at the same time
 
     // -------------------
     // Create a viz window
@@ -87,17 +97,18 @@ int main(int argc, char** argv)
     {
     	// assemble filenames for current index
     	ostringstream imgNumber;
-    	imgNumber << setfill('0') << setw(imgFillWidth) << imgStartIndex + imgIndex*4;
+    	imgNumber << setfill('0') << setw(imgFillWidth) << imgStartIndex + imgIndex*1;
     	//imgNumber << imgStartIndex + imgIndex;
     	string imgFullFilename = imgBasePath + imgPrefix + imgNumber.str() + imgFileType;
     	cout <<"image full name: "<<imgFullFilename<< endl;
 
     	cv::Mat img;
     	img = cv::imread(imgFullFilename);
+    	showImageRaw(img);
 
     	pointProcGPU.extractKpointDescriptors(img);
     	pointProcGPU.matchKpoints(mpointStrat);
-    	pointProcGPU.visualize(0);
+    	//pointProcGPU.visualize(0);
 
     	camPoseEstimator.calcCameraPose();
     	if(counter_viz%5000)
@@ -108,7 +119,8 @@ int main(int argc, char** argv)
     	counter_viz++;
 
     	//camPoseEstimator.visualize();
-    	camPoseEstimator.visualizeLastN(40);
+    	//camPoseEstimator.visualizeLastN(15);
+    	camPoseEstimator.visualizeLastFrames();
 
     	//usleep(200000);
     	//cv::waitKey(0);
