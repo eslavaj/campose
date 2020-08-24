@@ -351,6 +351,7 @@ void CameraPoseEstimator::visualizeLastFrames()
 	if(bufferCurrSize>=3)
 	{
 
+		m_visualizer.removeAllWidgets();
 		//for(int i = 21; i>=2; i--)
 		for(int i = bufferCurrSize; i>=2; i--)
 		{
@@ -364,7 +365,7 @@ void CameraPoseEstimator::visualizeLastFrames()
 		   0.0000000, -1.0000000,  0.0000000};
 		cv::Mat rotViewer = cv::Mat(3, 3, CV_64F, rotViewer_elem);
 
-		double translViewer_elem[3] = { 0, -55, 0};
+		double translViewer_elem[3] = { 0, -70, -10};
 		cv::Mat translViewer = cv::Mat(3, 1, CV_64F, translViewer_elem);
 		double cumulTransl_elem[3] = {(m_dataFrameBuffer.end() - 1)->pose.translation().val[0],
 								   (m_dataFrameBuffer.end() - 1)->pose.translation().val[1],
@@ -382,7 +383,7 @@ void CameraPoseEstimator::visualizeLastFrames()
 		m_visualizer.setViewerPose(poseViewer);
 
 		m_visualizer.spinOnce(1,     // pause 1ms
-							true); // redraw
+							false); // redraw
 
 		//m_visualizer.spin();
 

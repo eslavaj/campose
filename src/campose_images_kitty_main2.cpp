@@ -73,11 +73,11 @@ int main(int argc, char** argv)
 	string imgPrefix = img_folder + "/"; // left camera, color
 	string imgFileType = ".png";
 	int imgStartIndex = 1; // first file index to load (assumes Lidar and camera names have identical naming convention)
-	int imgEndIndex = 700;   // last file index to load
+	int imgEndIndex = 300;   // last file index to load
 	int imgFillWidth = 6;  // no. of digits which make up the file index (e.g. img-0001.png)
 
 
-    int dataBufferSize = 35;       // no. of images which are held in memory (ring buffer) at the same time
+    int dataBufferSize = 40;       // no. of images which are held in memory (ring buffer) at the same time
 
     // -------------------
     // Create a viz window
@@ -97,7 +97,7 @@ int main(int argc, char** argv)
     {
     	// assemble filenames for current index
     	ostringstream imgNumber;
-    	imgNumber << setfill('0') << setw(imgFillWidth) << imgStartIndex + imgIndex*1;
+    	imgNumber << setfill('0') << setw(imgFillWidth) << imgStartIndex + imgIndex*2;
     	//imgNumber << imgStartIndex + imgIndex;
     	string imgFullFilename = imgBasePath + imgPrefix + imgNumber.str() + imgFileType;
     	cout <<"image full name: "<<imgFullFilename<< endl;
