@@ -41,10 +41,10 @@ ExtractReturnCode::ExtractReturnCode KeypointProcessorGpu::extractKpointDescript
     cv::cuda::GpuMat mask1; // this holds any mask you may want to use, or can be replace by noArray() in the call below if no mask is needed
     cv::cuda::Stream istream;
 
-    if(m_detectorType.compare("ORB"))
+    if(m_detectorType.compare("ORB") == 0)
     {
     	/*ORB*/
-        cv::Ptr<cv::cuda::ORB> orb = cv::cuda::ORB::create(250, 1.2f, 8, 31, 0, 2, 0, 31, 20, true);
+        cv::Ptr<cv::cuda::ORB> orb = cv::cuda::ORB::create(500, 1.2f, 8, 31, 0, 2, 0, 31, 20, true);
         t = (double)cv::getTickCount();
         orb->detectAndComputeAsync(frame.gpu_cameraImg, mask1, gkeypoints, gdescriptors, false, istream);
         istream.waitForCompletion();

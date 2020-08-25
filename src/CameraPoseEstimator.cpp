@@ -24,6 +24,8 @@ void CameraPoseEstimator::calcCameraPose()
 {
 	if(m_dataFrameBuffer.size()>1)
 	{
+		double t = (double)cv::getTickCount();
+
 		cv::Mat inliers;
 		(m_dataFrameBuffer.end() - 1)->essentialMatrix =
 				cv::findEssentialMat(
@@ -153,6 +155,10 @@ void CameraPoseEstimator::calcCameraPose()
 		translVectorInv.at<double>(0,2) = (m_dataFrameBuffer.end() - 1)->translationVector.at<double>(0,2)*(1);
 		cv::Affine3d pose_tmp((m_dataFrameBuffer.end() - 1)->rotationMatrix, translVectorInv);
 		(m_dataFrameBuffer.end() - 1)->pose = pose_tmp.concatenate((m_dataFrameBuffer.end() - 2)->pose);
+
+		t = ((double)cv::getTickCount() - t) / cv::getTickFrequency();
+		cout << "#6 : Camera pose estimation done in " << 1000 * t / 1.0 << " ms" << endl;
+
 	}
 }
 
@@ -365,7 +371,7 @@ void CameraPoseEstimator::visualizeLastFrames()
 		   0.0000000, -1.0000000,  0.0000000};
 		cv::Mat rotViewer = cv::Mat(3, 3, CV_64F, rotViewer_elem);
 
-		double translViewer_elem[3] = { 0, -70, -10};
+		double translViewer_elem[3] = { -15, -90, -15};
 		cv::Mat translViewer = cv::Mat(3, 1, CV_64F, translViewer_elem);
 		double cumulTransl_elem[3] = {(m_dataFrameBuffer.end() - 1)->pose.translation().val[0],
 								   (m_dataFrameBuffer.end() - 1)->pose.translation().val[1],

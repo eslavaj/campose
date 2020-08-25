@@ -38,7 +38,7 @@ int showImageRaw(cv::Mat &imageFrame)
 	namedWindow( "Image input", WINDOW_NORMAL | WINDOW_KEEPRATIO ); // Create a window for display.
 	imshow("Image input", imageFrame);
 	cout<<"Press any key"<<endl;
-	cv::waitKey(10);
+	cv::waitKey(1);
 	return 0;
 }
 
@@ -73,11 +73,11 @@ int main(int argc, char** argv)
 	string imgPrefix = img_folder + "/"; // left camera, color
 	string imgFileType = ".png";
 	int imgStartIndex = 1; // first file index to load (assumes Lidar and camera names have identical naming convention)
-	int imgEndIndex = 300;   // last file index to load
+	int imgEndIndex = 700;   // last file index to load
 	int imgFillWidth = 6;  // no. of digits which make up the file index (e.g. img-0001.png)
 
 
-    int dataBufferSize = 40;       // no. of images which are held in memory (ring buffer) at the same time
+    int dataBufferSize = 50;       // no. of images which are held in memory (ring buffer) at the same time
 
     // -------------------
     // Create a viz window
@@ -91,13 +91,13 @@ int main(int argc, char** argv)
 
     //cv::Mat frame, frame_vis;
 
-    int counter_viz = 0;
+    //int counter_viz = 0;
 
     for (size_t imgIndex = 0; imgIndex <= imgEndIndex - imgStartIndex; imgIndex++)
     {
     	// assemble filenames for current index
     	ostringstream imgNumber;
-    	imgNumber << setfill('0') << setw(imgFillWidth) << imgStartIndex + imgIndex*2;
+    	imgNumber << setfill('0') << setw(imgFillWidth) << imgStartIndex + imgIndex*1;
     	//imgNumber << imgStartIndex + imgIndex;
     	string imgFullFilename = imgBasePath + imgPrefix + imgNumber.str() + imgFileType;
     	cout <<"image full name: "<<imgFullFilename<< endl;
@@ -111,15 +111,9 @@ int main(int argc, char** argv)
     	//pointProcGPU.visualize(0);
 
     	camPoseEstimator.calcCameraPose();
-    	if(counter_viz%5000)
-    	{
-    		//camPoseEstimator.visualize();
-    		//camPoseEstimator.visualizeLast20();
-    	}
-    	counter_viz++;
 
     	//camPoseEstimator.visualize();
-    	//camPoseEstimator.visualizeLastN(15);
+    	//camPoseEstimator.visualizeLastN(400);
     	camPoseEstimator.visualizeLastFrames();
 
     	//usleep(200000);
