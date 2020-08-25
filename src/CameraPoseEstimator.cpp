@@ -371,7 +371,7 @@ void CameraPoseEstimator::visualizeLastFrames()
 		   0.0000000, -1.0000000,  0.0000000};
 		cv::Mat rotViewer = cv::Mat(3, 3, CV_64F, rotViewer_elem);
 
-		double translViewer_elem[3] = { -15, -90, -15};
+		double translViewer_elem[3] = { -15, -90, -10};
 		cv::Mat translViewer = cv::Mat(3, 1, CV_64F, translViewer_elem);
 		double cumulTransl_elem[3] = {(m_dataFrameBuffer.end() - 1)->pose.translation().val[0],
 								   (m_dataFrameBuffer.end() - 1)->pose.translation().val[1],
